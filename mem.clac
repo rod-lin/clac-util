@@ -1,0 +1,110 @@
+: // try to mimic memory in clac ;
+
+: nop ;
+: dup 1 pick ;
+: > swap < ;
+
+: ////////////////////////////////////////// case ;
+
+: // drop-all-case: x1 x2 x3 ... xn ret n ;
+: drop-all-case dup 1 < if drop 5 skip 1 - rot drop drop-all-case ;
+
+: case-no-find drop drop -1 ;
+
+: // case: x1 x2 x3 ... xn n i -> return n for i >= xn, requires: xn > xn - 1 ;
+: case
+    swap
+    dup 1 < if
+        case-no-find
+    15 skip
+        1 - swap rot 2 pick
+        swap < if case 3 skip drop dup drop-all-case
+;
+
+: ////////////////////////////////////////// mem unit ;
+
+: store4-0  store4 lshift4 0  + ;
+: store4-1  store4 lshift4 1  + ;
+: store4-2  store4 lshift4 2  + ;
+: store4-3  store4 lshift4 3  + ;
+: store4-4  store4 lshift4 4  + ;
+: store4-5  store4 lshift4 5  + ;
+: store4-6  store4 lshift4 6  + ;
+: store4-7  store4 lshift4 7  + ;
+: store4-8  store4 lshift4 8  + ;
+: store4-9  store4 lshift4 9  + ;
+: store4-10 store4 lshift4 10 + ;
+: store4-11 store4 lshift4 11 + ;
+: store4-12 store4 lshift4 12 + ;
+: store4-13 store4 lshift4 13 + ;
+: store4-14 store4 lshift4 14 + ;
+: store4-15 store4 lshift4 15 + ;
+
+: // a few bitwise ops ;
+: rshift4 dup half-byte - 16 / ;
+: lshift4 2 4 ** * ;
+: mod16 16 % ;
+: half-byte dup -1 swap < if mod16 3 skip -2147483648 + mod16 ;
+
+: // n st-val store4 ;
+: store4
+    dup if nop 2 skip 8 skip
+    swap 1 - dup
+    if swap 6 skip drop drop write-mem-unit 0 136 skip
+
+    dup half-byte
+    0 swap  1 swap  2 swap  3 swap
+    4 swap  5 swap  6 swap  7 swap
+    8 swap  9 swap  10 swap 11 swap
+    12 swap 13 swap 14 swap 15 swap
+
+    16 swap case            6 * skip
+    rshift4 store4-0    15  6 * skip
+    rshift4 store4-1    14  6 * skip
+    rshift4 store4-2    13  6 * skip
+    rshift4 store4-3    12  6 * skip
+    rshift4 store4-4    11  6 * skip
+    rshift4 store4-5    10  6 * skip
+    rshift4 store4-6    9   6 * skip
+    rshift4 store4-7    8   6 * skip
+    rshift4 store4-8    7   6 * skip
+    rshift4 store4-9    6   6 * skip
+    rshift4 store4-10   5   6 * skip
+    rshift4 store4-11   4   6 * skip
+    rshift4 store4-12   3   6 * skip
+    rshift4 store4-13   2   6 * skip
+    rshift4 store4-14   1   6 * skip
+    rshift4 store4-15   0   6 * skip
+;
+
+: // usage - int s2qst - stack to queue stack until the n is 0 ;
+: s2qst 9 swap store4 ;
+
+: s2qst-wrap swap rot s2qst ;
+
+: write-mem-unit swap 1 - dup if s2qst-wrap 3 skip drop swap drop ;
+
+: ////////////////////////////////////////// interface ;
+
+: // usage - n val peck - write val to the nth stack before 'n' ;
+: peck write-mem-unit ;
+
+: // usage - n alloc/free - push/remove n zeros to the stack ;
+: malloc-cb 1 - malloc 0 ;
+: malloc dup if malloc-cb 1 skip drop ;
+: mfree-cb swap drop 1 - free ;
+: mfree dup if mfree-cb 1 skip drop ;
+
+: // the only difference of mwrite/mread is that they use index starting from 0 ;
+: mwrite swap 1 + swap peck ;
+: mread 1 + pick ;
+
+: // usage - a b mem-print - print memory in [a, b), a < b, print order - a to b ;
+: mprint-cb 2 pick 2 + mread print swap 1 + swap mprint ;
+: mprint-clean drop drop ;
+: mprint dup 3 pick > if mprint-cb 1 skip mprint-clean ;
+
+: // usage - a b n mcopy - copy memory from [a, a + n) to [b, b + n) ;
+: mcopy-cb dup 4 pick + 3 + mread 3 pick 3 pick + 3 + swap mwrite mcopy ;
+: mcopy-clean drop drop drop ;
+: mcopy 1 - dup -1 > if mcopy-cb 1 skip mcopy-clean ;
