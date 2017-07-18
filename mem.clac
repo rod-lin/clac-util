@@ -1,4 +1,4 @@
-: // try to mimic memory in clac ;
+: // memory in clac ;
 
 : nop ;
 : dup 1 pick ;
@@ -23,6 +23,7 @@
 
 : ////////////////////////////////////////// mem unit ;
 
+: // different 4-bit value ;
 : store4-0  store4 lshift4 0  + ;
 : store4-1  store4 lshift4 1  + ;
 : store4-2  store4 lshift4 2  + ;
@@ -46,7 +47,7 @@
 : mod16 16 % ;
 : half-byte dup -1 swap < if mod16 3 skip -2147483648 + mod16 ;
 
-: // n st-val store4 ;
+: // n st-val store4 - store a 4-bit int to the queue stack ;
 : store4
     dup if nop 2 skip 8 skip
     swap 1 - dup
@@ -77,11 +78,14 @@
     rshift4 store4-15   0   6 * skip
 ;
 
-: // usage - int s2qst - stack to queue stack until the n is 0 ;
+: // usage - int s2qst -
+    transfer an int in the stack to recursing functions in the queue stack
+;
 : s2qst 9 swap store4 ;
 
 : s2qst-wrap swap rot s2qst ;
 
+: // store first n-1 elements to the queue stack and change the nth value ;
 : write-mem-unit swap 1 - dup if s2qst-wrap 3 skip drop swap drop ;
 
 : ////////////////////////////////////////// interface ;
@@ -95,11 +99,11 @@
 : mfree-cb swap drop 1 - free ;
 : mfree dup if mfree-cb 1 skip drop ;
 
-: // the only difference of mwrite/mread is that they use index starting from 0 ;
+: // peck/pick using index starting from 0 ;
 : mwrite swap 1 + swap peck ;
 : mread 1 + pick ;
 
-: // usage - a b mem-print - print memory in [a, b), a < b, print order - a to b ;
+: // usage - a b mem-print - print memory in [a, b), print order - a to b ;
 : mprint-cb 2 pick 2 + mread print swap 1 + swap mprint ;
 : mprint-clean drop drop ;
 : mprint dup 3 pick > if mprint-cb 1 skip mprint-clean ;
