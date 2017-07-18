@@ -1,0 +1,114 @@
+: ! requires mem.clac ;
+
+: // stack structure ;
+: // ---------------------------------------------- ;
+: // |    instr    | is | se |     stack     | pc | ;
+: // ---------------------------------------------- ;
+: // instr = instruction list, is = instruction list size ;
+: // se = stack end, pc = program counter ;
+
+: ////////////////////////////////////////// case ;
+
+: // drop-all-case: x1 x2 x3 ... xn ret n ;
+: drop-all-case dup 1 < if drop 5 skip 1 - rot drop drop-all-case ;
+
+: case-no-find drop drop -1 ;
+
+: // case: x1 x2 x3 ... xn n i -> return n for i >= xn, requires: xn > xn - 1 ;
+: case
+    swap
+    dup 1 < if
+        case-no-find
+    15 skip
+        1 - swap rot 2 pick
+        swap < if case 3 skip drop dup drop-all-case
+;
+
+: ////////////////////////////////////////// stack utils ;
+: dup 1 pick ;
+: nop ;
+
+: ////////////////////////////////////////// chicken stack ;
+: cstack-end -2147483648 ;
+: cstack cstack-end 0 ;
+
+: cstack-check-end dup cstack-end - if nop 1 skip error-chicken-injection ;
+
+: cpop swap cstack-check-end ;
+: cpop2 rot rot cstack-check-end swap cstack-check-end swap ;
+: cpush swap ;
+
+: csize 3 cstack-seach-end 3 - ;
+: cstack-seach-end
+    dup pick cstack-end 1 + < if
+        nop
+    3 skip
+        1 + cstack-seach-end
+;
+
+: cstack-print 3 cstack-print-it drop ;
+: cstack-print-it
+    dup pick cstack-end 1 + < if
+        nop
+    6 skip
+        dup pick print 1 + cstack-print-it
+;
+
+: ////////////////////////////////////////// main exec loop ;
+
+: .get-instr csize dup 4 + pick + 3 + 2 pick - pick ;
+: .inc-pc 1 + ;
+
+: .exec .get-instr dup 1 < if drop 3 skip .exec-instr .inc-pc .exec ;
+
+: .exec-instr
+    dup
+
+    1 swap
+    2 swap
+    3 swap
+    4 swap
+    5 swap
+    6 swap
+    7 swap
+    8 swap
+    9 swap
+    10 swap
+    10 swap
+    case                6 * skip
+    drop .chicken     9 6 * skip
+    drop .add         8 6 * skip
+    drop .fox         7 6 * skip
+    drop .rooster     6 6 * skip
+    drop .compare     5 6 * skip
+    drop .pick        4 6 * skip
+    drop .peck        3 6 * skip
+    drop .fr          2 6 * skip
+    drop .bbq         1 6 * skip
+    cpush nop         0 6 * skip
+
+;
+
+: .cpush-false 0 cpush ;
+: .cpush-true 1 cpush ;
+
+: .chicken      1 cpush ;
+: .add          cpop2 + cpush ;
+: .fox          cpop2 - cpush ;
+: .rooster      cpop2 * cpush ;
+: .compare      cpop2 - if .cpush-false 1 skip .cpush-true ;
+: .pick         cpop2 swap drop 1 + pick cpush ;
+: .peck         cpop2 1 + swap mwrite ; : // requires mem.clac ;
+: .fr           cpop2 swap 1 - if drop 3 skip + 1 - ;
+: .bbq          ;
+
+: ////////////////////////////////////////// interface ;
+: init-chicken 0 1 ;
+: chicken swap 1 + swap ;
+: . 1 + 0 swap ;
+: fly cstack .exec cstack-print ;
+: -- 0 1 ;
+: = drop .exec-instr cstack-print ;
+: chickens cstack-print ;
+
+init-chicken
