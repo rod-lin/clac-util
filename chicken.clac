@@ -1,5 +1,7 @@
 : ! requires mem.clac ;
 
+: // chicken reference: http://torso.me/chicken-spec ;
+
 : // stack structure ;
 : // ---------------------------------------------- ;
 : // |    instr    | is | se |     stack     | pc | ;

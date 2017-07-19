@@ -23,7 +23,7 @@
 
 : ////////////////////////////////////////// mem unit ;
 
-: // different 4-bit value ;
+: // different 4-bit values ;
 : store4-0  store4 lshift4 0  + ;
 : store4-1  store4 lshift4 1  + ;
 : store4-2  store4 lshift4 2  + ;
@@ -78,8 +78,8 @@
     rshift4 store4-15   0   6 * skip
 ;
 
-: // usage - int s2qst -
-    transfer an int in the stack to recursing functions in the queue stack
+: // usage - val s2qst -
+    'push' a stack element to the queue stack using 1-4 sub-functions(store4-*)
 ;
 : s2qst 9 swap store4 ;
 
@@ -93,13 +93,13 @@
 : // usage - n val peck - write val to the nth stack before 'n' ;
 : peck write-mem-unit ;
 
-: // usage - n alloc/free - push/remove n zeros to the stack ;
+: // usage - n malloc/mfree - push/remove n zeros/values to/from the stack ;
 : malloc-cb 1 - malloc 0 ;
 : malloc dup if malloc-cb 1 skip drop ;
 : mfree-cb swap drop 1 - free ;
 : mfree dup if mfree-cb 1 skip drop ;
 
-: // peck/pick using index starting from 0 ;
+: // same as peck/pick but use index starting from 0 ;
 : mwrite swap 1 + swap peck ;
 : mread 1 + pick ;
 
